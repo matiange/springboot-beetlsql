@@ -13,7 +13,7 @@ create table sys_user
 		unique (username)
 )comment '系统用户';
 
-INSERT INTO sys_user (username, password, email, mobile, status, create_user_id, create_time) VALUES ('系统管理员', '123456', '736431244@qq.com', '15393703396', 1, 1, '2020-02-19 09:34:46');
+INSERT INTO sys_user (username, password, email, mobile, status, create_user_id, create_time) VALUES ('admin', '123456', '736431244@qq.com', '15393703396', 1, 1, '2020-02-19 09:34:46');
 
 create table sys_role
 (
