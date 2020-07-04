@@ -23,7 +23,7 @@ userPageList
     @orm.many({"userId":"userId"},"sysUser.sysUserRole","SysUserRole");
 userPermsList
 ===
-    * 如果是超级管理员 查找菜单表里全部权限
+    * 如果是超级管理员 查找菜单表里全部权限com.matiange.utils.Constant.SUPER_ADMIN
    	SELECT m.perms 
    	@if(userId==@com.matiange.utils.Constant.SUPER_ADMIN){
    	    FROM sys_menu m where 1=1
@@ -109,3 +109,4 @@ sysUserRole
 ===
     select sur.role_id from sys_user_role sur
     where sur.user_id=#userId#
+    

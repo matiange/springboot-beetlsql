@@ -26,6 +26,7 @@ public class BeetlSqlConfig {
         BeetlSqlScannerConfigurer conf = new BeetlSqlScannerConfigurer();
         conf.setBasePackage("com.matiange");//扫描那些类可以自动注入
         conf.setSqlManagerFactoryBeanName("sqlManagerFactoryBean");
+//        conf.setDaoSuffix();结构以xxx结尾
         return conf;
     }
 
