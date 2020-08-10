@@ -1,19 +1,25 @@
 package com.matiange.utils;
 
+import com.alibaba.fastjson.JSON;
 import com.matiange.entity.SysUser;
+import com.matiange.entity.UserSession;
+import com.matiange.service.SysRoleService;
 import com.matiange.service.SysUserService;
+import com.matiange.shiro.SessionContext;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.PrincipalCollection;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 自定义权限登录验证
@@ -24,6 +30,9 @@ public class AuthRealm extends AuthorizingRealm {
 
     @Resource
     private SysUserService sysUserService;
+
+    @Resource
+    private SysRoleService SysRoleService;
 
     /**
      * 认证(登录时调用)
@@ -48,7 +57,26 @@ public class AuthRealm extends AuthorizingRealm {
             //状态值为锁定状态
             throw new LockedAccountException("账号已被锁定,请联系管理员");
         }
-        return new SimpleAuthenticationInfo(sysUser, sysUser.getPassword(), getName());//放入shiro.调用CredentialsMatcher检验密码
+        Session session = SecurityUtils.getSubject().getSession();//获取session
+        UserSession userSession = new UserSession();
+        userSession.setAuthCacheKey(session.getId().toString());
+        userSession.setUsername(((UsernamePasswordToken) token).getUsername());
+        userSession.setUserId(sysUser.getUserId());
+        userSession.setStatus(sysUser.getStatus());
+        userSession.setCreateUserId(sysUser.getCreateUserId());
+        userSession.setEmail(sysUser.getEmail());
+        userSession.setMobile(sysUser.getMobile());
+        userSession.setPassword(sysUser.getPassword());
+        userSession.setCreateTime(sysUser.getCreateTime());
+        //角色
+        List<Long> roleIdList = SysRoleService.roleIdList(sysUser.getCreateUserId());
+        if(roleIdList!=null && roleIdList.size()>0){
+            userSession.setRoleIdList(roleIdList);
+        }
+        session.setAttribute(SessionContext.USER_SESSION_KEY, JSON.toJSON(userSession));
+
+        SimpleAuthenticationInfo authenticationInfo = new SimpleAuthenticationInfo(userSession, sysUser.getPassword(), getName());//放入shiro.调用CredentialsMatcher检验密码
+        return authenticationInfo;//放入shiro.调用CredentialsMatcher检验密码
     }
 
     /**
@@ -60,11 +88,21 @@ public class AuthRealm extends AuthorizingRealm {
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(
             PrincipalCollection principal) {
-        SysUser sysUser = (SysUser) principal.getPrimaryPrincipal();
+        Object userSession = principal.getPrimaryPrincipal();//这里强转报错暂时用beanutil转一下
+
+        UserSession sysUser = new UserSession();
+        try {
+            BeanUtils.copyProperties(sysUser,userSession);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
         //当前用户id
         Long userId = sysUser.getUserId();
         //根据id获得权限列表
         List<String> permissions = sysUserService.userPermsList(userId);
+        List<String> collect = permissions.stream().filter(notBank -> StringUtils.isNotBlank(notBank)).collect(Collectors.toList());
         Set<String> permsSet = new HashSet<>();
         for (String perms : permissions) {//将空的权限去除
             if (StringUtils.isNotBlank(perms)) {

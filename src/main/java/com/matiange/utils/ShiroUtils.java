@@ -1,6 +1,8 @@
 package com.matiange.utils;
 
 import com.matiange.entity.SysUser;
+import com.matiange.entity.UserSession;
+import com.matiange.shiro.SessionContext;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.session.Session;
@@ -20,8 +22,8 @@ public class ShiroUtils {
         return SecurityUtils.getSubject();
     }
 
-    public static SysUser getSysUser() {
-        return (SysUser) SecurityUtils.getSubject().getPrincipal();
+    public static UserSession getSysUser() {
+        return SessionContext.getUserSession();
     }
 
     public static Long getUserId() {

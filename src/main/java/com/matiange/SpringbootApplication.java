@@ -5,13 +5,14 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.ComponentScan;
 
 /**
  * 启动类放在根目录下
  * 部署war包启动方式 通过继承
  * SpringBootServletInitializer
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.matiange")
 public class SpringbootApplication extends SpringBootServletInitializer {
 
     @Override
@@ -24,11 +25,11 @@ public class SpringbootApplication extends SpringBootServletInitializer {
 
     //改jar包部署时main方法启动
     public static void main(String[] args) throws Exception {
-        /*new SpringApplicationBuilder(SpringbootApplication.class)
+        new SpringApplicationBuilder(SpringbootApplication.class)
                 .bannerMode(Banner.Mode.CONSOLE)
-                .run(args);*/
+                .run(args);
 //2：改war包启动
-        SpringApplication.run(SpringbootApplication.class,args);
+//        SpringApplication.run(SpringbootApplication.class,args);
     }
 
 }

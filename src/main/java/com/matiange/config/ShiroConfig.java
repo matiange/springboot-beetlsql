@@ -3,17 +3,27 @@ package com.matiange.config;
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.google.code.kaptcha.util.Config;
+import com.matiange.cache.CacheServiceFactory;
+import com.matiange.shiro.CustomSessionManager;
+import com.matiange.shiro.SecurityRedisSessionDAO;
 import com.matiange.utils.AuthRealm;
 import com.matiange.utils.CredentialsMatcher;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
+import org.apache.shiro.codec.Base64;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.filter.authc.LogoutFilter;
+import org.apache.shiro.web.mgt.CookieRememberMeManager;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.SimpleCookie;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
+import org.crazycake.shiro.*;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +41,11 @@ import java.util.Properties;
  */
 @Configuration
 public class ShiroConfig {
+    @Value("${redis.servers}")
+    private String servers;
+
+    @Autowired
+    private CacheServiceFactory factory;
 
     @Bean(name = "shiroFilter")
     public ShiroFilterFactoryBean shiroFilterFactoryBean(
@@ -83,7 +98,7 @@ public class ShiroConfig {
     }
 
     @Bean(name = "authRealm")//自定义权限登录验证
-    @DependsOn("lifecycleBeanPostProcessor")
+//    @DependsOn("lifecycleBeanPostProcessor")
     public AuthRealm authRealm(
             @Qualifier("credentialsMatcher") CredentialsMatcher credentialsMatcher) {
         AuthRealm realm = new AuthRealm();
@@ -91,28 +106,31 @@ public class ShiroConfig {
         return realm;
     }
 
-    @Bean(name = "ehCacheManager")//缓存
+    /*@Bean(name = "ehCacheManager")//缓存
     @DependsOn("lifecycleBeanPostProcessor")
     public EhCacheManager ehCacheManager() {
-        return new EhCacheManager();
-    }
+        EhCacheManager ehCacheManager = new EhCacheManager();
+        //ehCacheManager.setCacheManagerConfigFile("classpath:ehcache-shiro.xml");
+        return ehCacheManager;
+    }*/
 
     @Bean(name = "securityManager")//核心安全事务管理
     public SecurityManager securityManager(
-            @Qualifier("authRealm") AuthRealm authRealm,//自定义验证器
-            @Qualifier("ehCacheManager") EhCacheManager ehCacheManager//缓存
-    ) {
+            @Qualifier("authRealm") AuthRealm authRealm//自定义验证器
+    ) {//@Qualifier("ehCacheManager") EhCacheManager ehCacheManager//将数据缓存到本地内存或磁盘上
         DefaultWebSecurityManager securityManager =
                 new DefaultWebSecurityManager();
         securityManager.setRealm(authRealm);
-        securityManager.setCacheManager(ehCacheManager);
+        securityManager.setCacheManager(cacheManager());
+        securityManager.setSessionManager(sessionManager());
+        securityManager.setRememberMeManager(rememberMeManager());//记录cookien
         return securityManager;
     }
 
-    @Bean(name = "lifecycleBeanPostProcessor")
+    /*@Bean(name = "lifecycleBeanPostProcessor")
     public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
         return new LifecycleBeanPostProcessor();
-    }
+    }*/
 
     @Bean
     @ConditionalOnMissingBean
@@ -135,5 +153,89 @@ public class ShiroConfig {
     @Bean(name = "shiroDialect")
     public ShiroDialect shiroDialect() {
         return new ShiroDialect();
+    }
+
+    /**
+     * cacheManager 缓存 redis实现
+     * 使用的是shiro-redis开源插件
+     * @return
+     */
+    public RedisCacheManager cacheManager() {
+        RedisCacheManager redisCacheManager = new RedisCacheManager();
+        redisCacheManager.setRedisManager(redisManager());
+
+        return redisCacheManager;
+    }
+
+
+    /**
+     * 配置shiro redisManager
+     * 使用的是shiro-redis开源插件
+     * @return
+     */
+    @Bean
+    public IRedisManager redisManager() {
+        String[] serverArr = servers.split(";");
+        if(serverArr.length == 1){
+            RedisManager redisManager=new RedisManager();
+            redisManager.setJedisPool(factory.getjedisPool());
+            return redisManager;
+        }else{
+            RedisClusterManager redisManager = new RedisClusterManager();
+            redisManager.setJedisCluster(factory.getJc());
+            return redisManager;
+        }
+    }
+
+    /**
+     * shiro session的管理
+     */
+    @Bean
+    public DefaultWebSessionManager sessionManager() {
+        /**
+         * 使用自定义session管理器
+         */
+        CustomSessionManager sessionManager= new CustomSessionManager();
+
+        sessionManager.setGlobalSessionTimeout(180000);//3分钟测试
+        sessionManager.setSessionDAO(redisSessionDAO());
+
+        sessionManager.setSessionValidationSchedulerEnabled(true);
+        sessionManager.setDeleteInvalidSessions(true);
+        // tomcat的JESSIONID取消显示在路径上
+        sessionManager.setSessionIdUrlRewritingEnabled(false);
+        //定时检测session是否失效
+        sessionManager.setSessionValidationSchedulerEnabled(true);
+        return sessionManager;
+    }
+
+    /**
+     * RedisSessionDAO shiro sessionDao层的实现 通过redis
+     * 使用的是shiro-redis开源插件
+     */
+    @Bean
+    public RedisSessionDAO redisSessionDAO() {
+        SecurityRedisSessionDAO redisSessionDAO = new SecurityRedisSessionDAO();
+        redisSessionDAO.setRedisManager(redisManager());
+        return redisSessionDAO;
+    }
+
+    @Bean
+    public CookieRememberMeManager rememberMeManager(){
+        CookieRememberMeManager cookieRememberMeManager = new CookieRememberMeManager();
+        cookieRememberMeManager.setCookie(rememberMeCookie());
+        // cookieRememberMeManager.setCipherKey用来设置加密的Key,参数类型byte[],字节数组长度要求16
+        cookieRememberMeManager.setCipherKey(Base64.decode("MTIzNDU2Nzg5MGFiY2RlZg=="));
+//        cookieRememberMeManager.setCipherKey("1234567890abcdef".getBytes());
+        return cookieRememberMeManager;
+    }
+
+    @Bean
+    public SimpleCookie rememberMeCookie(){
+        //这个参数是cookie的名称，对应前端的checkbox的name = rememberMe
+        SimpleCookie simpleCookie = new SimpleCookie("rememberMe");
+        //cookie生效时间30天,单位秒;
+        simpleCookie.setMaxAge(2592000);
+        return simpleCookie;
     }
 }

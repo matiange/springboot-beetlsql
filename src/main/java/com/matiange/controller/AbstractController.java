@@ -1,6 +1,7 @@
 package com.matiange.controller;
 
 import com.matiange.entity.SysUser;
+import com.matiange.entity.UserSession;
 import com.matiange.utils.ShiroUtils;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ public abstract class AbstractController {
 
     Logger logger = LoggerFactory.getLogger(getClass());
 
-    SysUser getSysUser() {
+    UserSession getSysUser() {
         return ShiroUtils.getSysUser();
     }
 

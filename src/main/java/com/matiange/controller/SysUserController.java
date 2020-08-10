@@ -176,4 +176,17 @@ public class SysUserController extends AbstractController {
         ShiroUtils.logout();
         return R.ok("login");
     }
+
+
+    /**
+     * 用户管理页面
+     *
+     * @param model 前后台传值model
+     * @return sysuser
+     */
+    @RequestMapping("mdSysUser")
+    public String mdSysUser(Model model) {
+        model.addAttribute("roleList", sysRoleService.roleList(getUserId()));
+        return "md/mdSysUser";
+    }
 }

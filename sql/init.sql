@@ -122,3 +122,15 @@ create table edit_news
 	title varchar(100) null,
 	create_date datetime null
 )comment '新闻编辑';
+-- 创建生产管理表
+CREATE TABLE SYS_PRODUCT_MANAGEMENT (
+                                                  `PRODUCE_SID` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+                                                  `PRODUCE_NAME` varchar(50) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '产品名',
+                                                  `MAKER_NAME` varchar(50) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '制作人姓名',
+                                                  `MAKER_PHONE` varchar(50) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '制作人联系方式',
+                                                  `PRODUCE_CODE` varchar(50) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '产品编码',
+                                                  `POST_CODE` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '岗位编码',
+                                                  `POST_NAME` varchar(64) CHARACTER SET utf8 COLLATE utf8_bin NULL DEFAULT NULL COMMENT '岗位名称',
+                                                  `CREATE_DATE` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+                                                  PRIMARY KEY (`PRODUCE_SID`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_bin COMMENT = '生产管理' ROW_FORMAT = Compact;
