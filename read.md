@@ -95,3 +95,17 @@ spring:
 server:
   port: 8088
 【3】配置权限shiroCondig,配置Remal验证授权(AuthRealm)
+
+【4】添加了redis+shiro存储session的功能,在application.properties中配置redis相关参数(我配置的是单机版的,如果需要配置集群逗号分隔添加地址)
+-- #redis：redis.servers这里配置的是单机版,如果配置集群用逗号分割例如：localhost:7000;localhost:7001;localhost:7002;localhost:7003;localhost:7004;localhost:7005
+redis.servers=localhost:6379
+redis.maxWaitMillis=5000
+redis.maxTotal=1000
+redis.minIdle=8
+redis.maxIdle=100
+redis.testOnBorrow=true
+redis.connectionTimeout=10000
+redis.cluster.soTimeout=800
+redis.cluster.maxRedirections=6
+redis.password=123456
+redis.enable=true
