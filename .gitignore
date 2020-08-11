@@ -1,0 +1,12 @@
+/target/classes/static/js/third-party/highcharts/modules/map.src.js
+*.class
+*.png
+*.gif
+*.css
+*.jar
+*.json
+*.svg
+*.ttf
+*.woff*
+*.otf
+*.eot

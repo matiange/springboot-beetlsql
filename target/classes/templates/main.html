@@ -1,0 +1,20 @@
+<!--主页片段-->
+<div id="page" th:fragment="main" xmlns:th="http://www.w3.org/1999/xhtml">
+    <h1 id="main" style="height: 60px;margin-top: initial">
+    <marquee id="affiche" align="left" behavior="scroll" direction="right" hspace="50" vspace="20" loop="-1" scrollamount="10" scrolldelay="100" onMouseOut="this.start()" onMouseOver="this.stop()">
+        欢迎来到首页
+    </marquee>
+    </h1>
+    <img id='backgroundImage' class='review' src="../static/images/yxtk_background.png"/>
+    <script type="text/javascript" th:src="@{/js/page.js}"></script>
+    <style type="text/css" >
+        html, body {
+            width: 100%;
+            height: 100%
+        }
+        img{
+            height: 450px;
+            width: 100%;
+        }
+    </style>
+</div>
