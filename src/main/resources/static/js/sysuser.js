@@ -58,6 +58,7 @@ $('#add').click(function () {
         content: $('#editLayer'),
         btn: ['保存', '关闭'],
         success: function () {
+            // document.getElementById("editFormUser").reset();
             $('#editPwd').css({display: 'block'});
             $('#editForm')[0].reset();
             $('[name=status]')[1].checked = true;
@@ -304,5 +305,13 @@ function checkEmail(email) {
         emailMsg.html("*邮箱格式错误");
         emailMsg.css({color: 'red'});
         emailFlag = false;
+    }
+}
+document.onkeydown = function (e) {//esc取消
+    debugger
+    var theEvent = window.event || e;
+    var code = theEvent.keyCode || theEvent.which;
+    if (27 === code) {
+        layer.closeAll();//关闭所有弹窗
     }
 }

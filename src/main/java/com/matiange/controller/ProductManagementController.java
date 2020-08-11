@@ -43,7 +43,7 @@ public class ProductManagementController extends AbstractController{
      */
     @ResponseBody
     @RequestMapping("/productPageList")
-    @RequiresPermissions("sys:productManagement:list")
+    @RequiresPermissions("md:product:list")
     public PageUtils productPageList(BtsParams params, PageUtils pageUtils){
         List<ProductManagement> productManagementList = produceManagementService.productPageList(params);
         Long total = produceManagementService.allCount(params);//总记录数
